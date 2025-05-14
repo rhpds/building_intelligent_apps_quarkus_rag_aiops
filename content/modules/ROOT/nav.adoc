@@ -1,7 +1,25 @@
-* xref:module-01.adoc[1. RPM Native Container]
-** xref:module-01.adoc#repositories[Repositories]
-** xref:module-01.adoc#software[Software]
 
-* xref:module-02.adoc[2. GitHub Sourced Container]
-** xref:module-02.adoc#prerequisites[Install Prerequisites]
-** xref:module-02.adoc#container[Enable Container]
+* xref:setup.adoc[1. Project Setup]
+** xref:setup.adoc#rhoai-login[Login to RHOAI]
+** xref:setup.adoc#configure-dsp[Configure Data Science Pipelines]
+** xref:setup.adoc#create-wrkbnch[Create the Workbench]
+** xref:setup.adoc#open-wrkbnch[Open the Workbench]
+
+* xref:module-03.adoc[2. Elyra & Docling]
+** xref:module-03.adoc#elyra[Elyra]
+** xref:module-03.adoc#docling[Docling]
+
+* xref:module-07.adoc[3. Run the Elyra Pipeline]
+** xref:module-07.adoc#llmconfig[LLM Environment Config]
+** xref:module-07.adoc#fileupload[Upload Files]
+** xref:module-07.adoc#elyra[Run Pipeline]
+** xref:module-07.adoc#viewrun[View the Pipeline Run]
+
+* xref:module-04.adoc[4. OpenShift Pipelines & Events]
+** xref:module-04.adoc#ocppipelines[Event Listeners]
+** xref:module-04.adoc#minio[Minio]
+
+* xref:module-05.adoc[5. Trigger a Data Science Pipeline]
+** xref:module-05.adoc#dsprun[Trigger Pipeline Run in OpenShift AI]
+
+* xref:module-06.adoc[6. Wrap-Up & Next Steps]

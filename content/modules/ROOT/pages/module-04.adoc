@@ -1,0 +1,139 @@
+= OpenShift Pipelines and Minio
+
+In the last section we manually ran the Elyra Data Science pipeline from a Jupyter notebook, but what if we want to run this pipeline anytime we get new data? To automate this workflow we can use OpenShift event listeners and OpenShift pipelines to automatically trigger new pipeline runs when data is uploaded to our s3 bucket.
+
+== Event Listeners[[ocppipelines]]
+
+. Login to your https://console-openshift-console.{openshift_cluster_ingress_domain}[OpenShift console^].
+
++
+image::openshift/openshift-login-page.png[OpenShift login screen,80%,80%]
+
+. Select *rhsso*. 
+
++
+image::openshift/openshift-rhsso-page.png[OpenShift rhsso screen,80%,80%]
+
+. Login with your username and password.
++
+*Username*
++
+[source,copy,role=execute,subs=attributes]
+----
+{user}
+----
++
+*Password*
++
+[source,copy,role=execute,subs=attributes]
+----
+{password}
+----
+
++
+image::openshift/openshift-userpass-page.png[OpenShift user/pass screen,80%,80%]
+
+. You should see the OpenShift Web console with the *summit-project-{user}*. Switch to the *Administrator* view in the left drop down.
+
++
+image::openshift/ocp-project.png[OpenShift project,100%,100%]
+
+. Scroll down and expand the *Pipelines* section on the left menu. Select the *Triggers*. Note that we have an event listener named *simple-pipeline-listener* setup.
+
++
+image::openshift/ocp-main-triggers.png[OpenShift triggers,100%,100%]
+
+. Click on *Trigger Templates* -> *simple-template* -> *YAML*. The event listener is configured to run this trigger template when activated. This template runs our *start-dsp-pipeline*. 
+
++
+image::openshift/ocp-trigger-template.png[OpenShift trigger template,100%,100%]
+
+. Click on *Pipelines*. You should see the *start-dsp-pipeline*. This OpenShift pipeline is responsible for starting our OpenShift AI Data Science Pipeline.
+
++
+image::openshift/ocp-pipeline.png[OpenShift pipeline,100%,100%]
+
+== Minio[[minio]]
+
+We're using Minio for our s3 buckets.
+
+//// 
+. Get the route for Minio by going to the OpenShift web console and make sure you change your Project to *All Projects*. Select *Networking* -> *Routes*. Type _minio-ui_ into the search bar and click the *Location* URL to open the Minio web console.
+
++
+image::openshift/minio-route.png[Minio route,100%,100%]
+////
+
+. Login to the https://minio-ui-summit-project-{user}.{openshift_cluster_ingress_domain}/[*Minio web console*^].
++
+*Minio username*
++
+[source,copy,role=execute]
+----
+minio
+----
++
+*Minio password*
++
+[source,copy,role=execute]
+----
+minio123
+----
++
+image::openshift/minio-login.png[Minio login page,80%,80%]
+
+. We'll create an event destination so that our event listener can trigger our OpenShift pipeline whenever we upload files to the s3 bucket.
+
++
+Click on *Events* on the left menu and click on the *Add event destination* button.
+
++
+image::openshift/minio-add-event-destination.png[Minio add event destination,100%,100%]
+
+. Scroll down until you see the webhook function. Click on *Webhook*. 
+
++
+image::openshift/minio-webhook-event.png[Minio webhook event,100%,100%]
+
+. We'll need to get our OpenShift token before we can configure the event destination in Minio. You can get the token from the OpenShift web console. 
++
+Click on your username in the top right corner of the https://console-openshift-console.{openshift_cluster_ingress_domain}/dashboards[OpenShift web console^] and click *Copy login command*.
++
+image::openshift/copy-login-ocp.png[OpenShift token,100%,100%]
+
+. Click *Display Token* and copy the token to add to the event destination.
++
+image::openshift/ocp-token.png[OpenShift token,100%,100%]
+
+. Enter in the *Identifier*, the event listener route URL for the *Endpoint*, and your OpenShift token in the *Auth Token* field.
++
+*Identifier*
++
+[source,copy,role=execute,subs=attributes]
+----
+dsp-event-listener
+----
++
+*Event listener route*
++
+[source,copy,role=execute,subs=attributes]
+----
+https://el-simple-pipeline-listener-summit-project-{user}.{openshift_cluster_ingress_domain}/
+----
++
+Click *Save Event Destination* and click the *Refresh* button and refresh the page in your browser.
+
++
+image::openshift/minio-event-destination.png[Minio configure event destination,100%,100%]
+
+. Under Administration on the left hand menu click *Buckets*. Open the *upload-files* bucket and click *Events* for the upload-files bucket. Click on *Subscribe to Event*.
+
++
+image::openshift/minio-subscribe-to-events.png[Minio subscribe to events,100%,100%]
+
+. Select the *dsp-event-listener* webhook from the dropdown. Select the *PUT - Object Uploaded* event and click *Save*.
+
++
+image::openshift/minio-subscribe-to-bucket-events.png[Minio subscribe to events,100%,100%]
+
+Your s3 bucket is now configured to send an event to your OpenShift event listener every time a file is uploaded. In the next section we'll upload a file and see how it runs our pipeline!

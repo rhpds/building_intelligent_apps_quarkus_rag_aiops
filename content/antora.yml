@@ -1,12 +1,12 @@
 name: modules
-title: Default Title
+title: LB1942
 version: master
 nav:
   - modules/ROOT/nav.adoc
 
 asciidoc:
   attributes:
-    lab_name: "I'm the lab_name var"
+    lab_name: "Autogenerate knowledge files from multiple data formats with InstructLab, Docling, and Elyra"    
     release-version: master
     page-pagination: true
     my_var: "foo"
@@ -14,6 +14,9 @@ asciidoc:
     ssh_user: devops
     ssh_password: devops
     ssh_command: ssh someone@example.com
+    user: user1
+    password: REPLACE_ME
+    openshift_cluster_ingress_domain: apps.cluster-zl4pw.zl4pw.sandbox3928.opentlc.com
     page-links:
     - url: https://redhat.com
       text: Red Hat

@@ -1,0 +1,112 @@
+== Let's Run the Data Science Pipeline![[dsprun]]
+
+image::openshift/trigger-pipeline-arch.png[Trigger pipeline,100%,100%]
+
+To run the data science pipeline on OpenShift AI all we need to do is upload a file to our https://minio-ui-summit-project-{user}.{openshift_cluster_ingress_domain}/browser/upload-files[upload-files^] bucket in Minio. The Minio event destination will notify our event listener that a new file has been uploaded to the bucket and the event listener along with the trigger template will start our OpenShift AI Data Science Pipeline.
+
+NOTE: To interact with Minio we'll need to use a python script (we can't download/upload files on the lab laptops).  
+
+. Go back to your OpenShift AI workbench and open the *elyra_docling_rh_summit/openshift_solution/minio_utilities* directory. 
++
+Open the *upload-env.py* file and click the *Run* icon at the top. This python script will upload the env.config file to our Minio s3 bucket (upload-files). 
+
++
+NOTE: We're just uploading the env.config file again to our s3 bucket to trigger our event listener. Any file we add to the upload-files bucket in Minio will send a notification to our event listener in OpenShift.
+
++
+image::openshift/upload-env.png[Upload env.config,100%,100%]
+
+. Our event listener should have received the notification from the Minio event that a new file was uploaded and should have triggered a new pipeline run. 
+
++
+Go back to you https://console-openshift-console.{openshift_cluster_ingress_domain}[OpenShift web console^] and select the *Pipelines* from the left hand menu. Click on *PipelineRuns*. 
+
++
+You should see a successful pipeline run.
+
++
+image::openshift/ocp-pipeline-run-success.png[OCP Pipeline run,100%,100%]
+
+. Let's take a look at our OpenShift AI pipeline run. Open your https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}[OpenShift AI^] dashboard and click *Experiments* -> *Experiments and Runs* from the left menu. 
+
++
+Select the *Default* experiment and open the most recent pipeline run. To speed things up for the lab we've enabled caching so this pipeline should run the entire way through. In a real world implementation we would want to review our markdown and qna.yaml files as we did in the previous sections.
+
++
+image::openshift/cached-dsp-run.png[Cached DSP run,100%,100%]
+
+. That brings us to the end of the lab. image:openshift/celebrate.png[Celebrate!,2%,2%] Congratulations for making it to the end! image:openshift/celebrate.png[Celebrate!,2%,2%] 
+
+
+
+
+
+
+
+//// 
+. Let's review the markdown file so we can move the pipeline along.
+
++
+. Go back to your OpenShift AI workbench and open the *elyra_docling_rh_summit/openshift_solution/minio_utilities* directory. 
++
+Open the *HITL-review-markdown.py* file and click the *Run* icon at the top. This python script will download a PDF named _docling-markdown-review.md_ to the local directory.
+
++
+image::openshift/minio-utils-hitl-markdown-review.png[HITL markdown review,100%,100%]
+
+. Open the _docling-markdown-review.md_ file and check for any processing errors e.g. table alignment, list numbering
+
+For example:
+
+This is a page from the original PDF, notice the elements in the footer
+
+image::openshift/summit-pdf-render.png[HITL PDF render,100%,100%]
+
+*But the Markdown output has list numbering issues due to the items in the footer*
+
+image::openshift/markdown-error.png[HITL PDF render,100%,100%]
+
+*This would have to be fixed before continuing, for example*
+
+image::openshift/markdown-fixed.png[HITL markdown review,100%,100%]
+
+
+
+
+
+
+
+
+
++
+When you're done reviewing the markdown file close it and rename the file _docling-markdown-approved.md_ run the *HITL_upload_markdown.py*. This will upload our reviewed markdown file to an s3 bucket and our QNA Generator node will pull download it to generate the qna.yaml file.
+
+NOTE: You can right-click on the file and select *Rename* to update the file name.
++
+image::openshift/minio-utils-hitl-markdown-approved.png[HITL markdown approved,100%,100%]
+
+. TODO: THEY SHOULD GO BACK TO THE RHOA PIPELINE TO SEE THAT IT MOVED TO THE QNA REVIEW NODE.
+
+. Our final step is to review the generated qna.yaml file. 
+
++
+. Go back to your OpenShift AI workbench and open the *elyra_docling_rh_summit/openshift_solution/minio_utilities* directory. 
++
+Open the *HITL-review-qna.py* file and click the *Run* icon at the top. This python script will download a PDF named _qna-review_me.yaml_ to the local directory.
+
++
+image::openshift/minio-utils-hitl-qna-review.png[HITL qna review,100%,100%]
+
+. Open the _qna-review-me.yaml_ file. TODO: WHAT DO WE WANT THEM TO DO HERE? 
+
++
+When you're done reviewing the markdown file close it and rename the file _qna.yaml_ and run the *HITL_upload_qna.py*. This will upload our reviewed qna.yaml file to data-files-bucket in Minio.
+
++
+Your pipeline should be completed now!
+
++
+image::openshift/minio-utils-hitl-qna-approved.png[HITL QNA approved,100%,100%]
+
+. TODO: THEY SHOULD CHECK THE COMPLETED PIPELINE TO MAKE SURE IT RAN SUCCESSFULLY
+////

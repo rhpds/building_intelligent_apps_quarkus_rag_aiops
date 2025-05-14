@@ -1,0 +1,191 @@
+== Elyra Pipeline
+We'll run the pipeline from the *summit-workbench* Jupyter notebook we previously opened. Since Elyra is a visual representation of a pipeline it doesn't actually have a runtime built in. When we run the pipeline we are actually submitting the job to OpenShift AI Data Science Pipelines which converts the pipeline run into a Kubeflow pipeline run.
+
+image::openshift/elyra-pipeline-arch.png[Elyra pipeline,100%,100%]
+
+== LLM Environment Configuration[[llmconfig]]
+
+. In your *summit-workbench* open the *elyra_docling_rh_summit/openshift_solution/env.config* file. We have a Granite LLM (Large Language Model) running in our cluster that we'll use in the *QNA Generator* node to generate the question and answer pairs when our pipeline runs. 
++
+We'll need to put values in the env.config file for the *model-endpoint* and *model-token*.
+
++ 
+image::openshift/env-config.png[Environment config file,100%,100%]
+
+. Go to the https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}[OpenShift AI dashboard^] and click on *Data Science Projects* and click on *granite-model-project*. Finally, click the *Model* tab. 
+
++ 
+image::openshift/granite-model-project.png[Granite model project,100%,100%]
+
+. Click on the *Internal and external endpoint details* link and click on the *Copy* button. 
+
++ 
+image::openshift/granite-model-url.png[Granite inference endpoint,100%,100%]
+
+. Go back to your Jupyter notebook and paste the external inference endpoint as the value for *model-endpoint* in your *env.config* file. 
++
+NOTE: Make sure you append '*/vl*' to the *model-endpoint* value!
+
++ 
+image::openshift/env-config-model-endpoint.png[Environment variable model endpoint,100%,100%]
+
+. Let's copy the model token now. Go back to the *granite-model-project*, Click on the *>* image:openshift/left-arrow-model.png[Expand model details,14%,14%] on the left of the model name, and scroll down to the Token authentication section.
++
+Click the *Copy* button next to the token secret. 
+
++ 
+image::openshift/granite-model-token.png[Granite model token,100%,100%]
+
+. Go back to your Jupyter notebook and paste the token secret as the value for *model-token* in your *env.config* file. 
+
++ 
+image::openshift/env-config-model-token.png[Environment variable token,100%,100%]
+
+. Make sure your *env.config* file is saved. We'll now upload our Word, PDF, and *env.config* files to an s3 bucket so that our pipeline can pull them down when it runs.
+
+== Upload Files[[fileupload]]
+
+NOTE: To interact with Minio we'll need to use a python script (we can't download/upload files on the lab laptops).  
+
+. Open the *elyra_docling_rh_summit/openshift_solution/minio_utilities/upload-env.py* and *elyra_docling_rh_summit/openshift_solution/minio_utilities/upload-pdf-docx.py* files and click *Run* in both files.
+
++ 
+image::openshift/upload-env.png[Upload env-config to s3,100%,100%]
+
++ 
+image::openshift/upload-pdf-docx.png[Upload PDF and DOCX to s3,100%,100%]
+
+. In the console output make sure the files were successfully uploaded to the https://minio-ui-summit-project-{user}.{openshift_cluster_ingress_domain}/browser/upload-files[*upload-files*^] bucket in Minio.
++
+*Minio username*
++
+[source,copy,role=execute]
+----
+minio
+----
++
+*Minio password*
++
+[source,copy,role=execute]
+----
+minio123
+----
++
+You should see similar messages if the file uploads were successful.
++ 
+image::openshift/env-config-upload-output.png[env config upload output,100%,100%]
+
++ 
+image::openshift/pdf-docx-upload-output.png[PDF DOCX upload output,100%,100%]
+
+== Run Pipeline[[elyra]]
+
+. Time to run the pipeline! Open the *elyra_docling_rh_summit/openshift_solution/elyra-docling-pipeline.pipeline* file and click the *Run* button.
+
++ 
+image::openshift/run-pipeline.png[Run pipeline,100%,100%]
+
+. Leave the Pipeline name as *elyra-docling-pipeline*, make sure the Runtime Configuration is *Data Science Pipeline*, and add your Minio service as the *minio_url* parameter. You can copy the URL below.
+
++
+[source,copy,role=execute,subs=attributes]
+----
+http://minio.summit-project-{user}.svc.cluster.local:9000
+----
+
++ 
+image::openshift/run-pipeline-options.png[Run pipeline,100%,100%]
+
+. If your pipeline started successfully you should see a pop up like the one below. Click on the *Run Details* link.
+
++ 
+image::openshift/pipeline-run-success-popup.png[Pipeline run success,100%,100%]
+
+== View the Pipeline Run[[viewrun]]
+
+. Under the *Experiments and runs* section in https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/experiments/summit-project-{user}[OpenShift AI^] you should see that your pipeline has started running. 
+
++ 
+image::openshift/pipeline-run-start-rhoai.png[Pipeline run start in RHOAI,100%,100%]
+
+. The pipeline will take a few minutes to run. While it's running you can take a look at some of the details about each node. Click on a node and select *Input/Output*. This section contains the execution name and a link with more detailed information. Any input parameters are also listed here.
+
++ 
+image::openshift/pipeline-input-output.png[Pipeline Input/Output in RHOAI,100%,100%]
+
+. You can also follow the logs of each node in the pipeline run. Select *Log* tab and you can view the raw logs or expand the log and watch it in real time.    
+
++ 
+image::openshift/pipeline-logs.png[Pipeline logs in RHOAI,100%,100%]
+
+. Your pipeline should successfully complete the *Ingest Files*, *Docling*, and *Combine Markdown* nodes and wait at the *HITL Markdown* node. This node will wait for an approved markdown file to be uploaded to the *data-files* bucket in Minio.
++ 
+image::openshift/hitl-markdown-wait.png[HITL Markdown node,100%,100%]
+
+. Go back to your Jupyter notebook and open *elyra_docling_rh_summit/openshift_solution/minio_utilities/HITL-review-markdown.py*. This Python script pulls down our combined markdown (combined.md) file from the https://minio-ui-summit-project-{user}.{openshift_cluster_ingress_domain}/browser/data-files-bucket[data-files-bucket^] that was generated during the Docling node. 
++
+Click on the *Run* button and make sure the combined.md file was downloaded with the name *docling-markdown-review.md*. 
++ 
+image::openshift/hitl-review-markdown.png[HITL markdown review,100%,100%]
+
+. You should now see the *docling-markdown-review.md* file in minio_utilities directory.
++
+When preparing your markdown files for InstructLab it's very important that this file contains properly formatted data and domain specific data for the intended use case. 
++
+In most cases generated markdown files will need to be manually edited to make sure the context is correct.
++ 
+image::openshift/hitl-review-mdfile.png[HITL review markdown file,100%,100%]
++
+Open the *docling-markdown-review.md* file and check for any processing errors e.g. table alignment, list numbering
++
+For example:
++
+This is a page from the original PDF, notice the elements in the footer
++
+image::openshift/summit-pdf-render.png[HITL PDF render,100%,100%]
++
+*But the Markdown output has list numbering issues due to the items in the footer*
++
+image::openshift/markdown-error.png[HITL PDF render,100%,100%]
++
+*This would have to be fixed before continuing, for example*
++
+image::openshift/markdown-fixed.png[HITL markdown review,100%,100%]
++
+For this lab we'll assume that you made the appropriate changes and renamed the approved version as *docling-markdown-approved.md*.
+
+. Now that we have a reviewed and approved markdown file we can upload to an s3 bucket so our pipeline can move on to generate the qna.yaml file (QNA Generator node).
++ 
+Open *elyra_docling_rh_summit/openshift_solution/minio_utilities/HITL-upload-markdown.py* and click the *Run* button.
++ 
+image::openshift/hitl-upload-md.png[HITL uplodad markdown file,100%,100%]
+
+. Go back to your pipeline run in the https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}[OpenShift AI dashboard^] and you should see that the pipeline has progressed to the *QNA Generator* node.
++ 
+This node takes the approved markdown file that you uploaded in the previous step and generates question and answer pairs that you can use in your InstructLab qna.ymal file.
++
+image::openshift/qna-generator-node-start.png[QNA generator node starting,100%,100%]
+
+. Once your QNA Generator node is complete go to your *summit-workbench* and open the *elyra_docling_rh_summit/openshift_solution/minio_utilities/HITL-review-qna.py* file. 
++
+image::openshift/qna-generator-node-complete.png[QNA generator node finished,100%,100%]
+
+. Click the *Run* button on the *HITL-review-qna.py* file. This should download the generated qna.yaml file with the file name *qna-review-me.yaml*.
++
+image::openshift/hitl-qna-review.png[Download generated qna file,100%,100%]
++
+Open the *qna-review-me.yaml* file. Similar to the markdown file, our generated qna file needs to be reviewed to ensure that the quality of the context and question and answer pairs meet the needs of the use case. 
++
+image::openshift/qna-file-review.png[Review generated qna file,100%,100%]
++ 
+In addition to the manual review, the other sections of the qna.yaml file would need to be added to make this a valid file that InstructLab could use to fine tune a model. 
++
+For this lab we'll assume that you made the necessary updates and the qna.yaml file contains the correct data for the intended use case and you renamed the approved version as *qna-approved.yaml*.
+
+. Open *elyra_docling_rh_summit/openshift_solution/minio_utilities/HITL-upload-qna.py* and click the *Run* button.
++
+image::openshift/hitl-qna-upload.png[QNA upload,100%,100%]
+
+. Go back to your pipeline run in https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}[OpenShift AI^] and you should now see that it succeeded! 
++
+image::openshift/pipeline-success.png[Successful pipeline run,100%,100%]

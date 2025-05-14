@@ -1,0 +1,154 @@
+== Elyra Overview[[elyra]]
+
+Elyra is a set of AI-centric extensions to JupyterLab, and its pipeline capabilities are a core feature. Here's an overview of Elyra pipelines:
+
+*Visual Pipeline Editor*
+
+Elyra provides a visual interface for creating and managing data science and machine learning pipelines. This allows users to construct workflows by dragging and dropping components (like Jupyter notebooks and Python scripts) onto a canvas and connecting them.
+
+*Pipeline Nodes*
+
+Pipelines are composed of nodes, where each node represents a specific task. These tasks can be:
+
+* Executing Jupyter notebooks.
+* Running Python scripts.
+* Running R scripts.
+
+These nodes can have dependencies, defining the order of execution.
+
+*Runtime Flexibility*
+
+Elyra pipelines are designed to be flexible and can be executed on various platforms:
+
+* Local/JupyterLab
+* Apache Airflow
+* Kubeflow Pipelines
+
+*Runtime Configurations*
+
+Elyra uses runtime configurations to store metadata about the target execution environment. This allows pipelines to be portable across different platforms.
+
+*Generic and Runtime-Specific Pipelines*
+
+Elyra supports both generic pipelines (which can run on multiple platforms) and runtime-specific pipelines (which are designed for a particular platform).
+
+//// 
+*Key Features and Benefits*
+
+* Simplified Workflow Creation: The visual editor makes it easier to create complex workflows without writing extensive code.
+* Increased Productivity: By automating tasks and managing dependencies, Elyra helps data scientists and machine learning engineers focus on their core work.
+* Improved Reproducibility: Pipelines provide a consistent and reproducible way to execute workflows.
+* Scalability: Integration with platforms like Kubeflow Pipelines enables scalable execution of machine learning workflows.
+* Portability: The ability to run pipelines on different platforms provides flexibility and avoids vendor lock-in.
+////
+
+=== Steps
+
+. We'll start by taking a look at our data science pipeline. 
+
++
+Open the *elyra_docling_rh_summit/openshift_solution* directory and open the *elyra-docling-pipeline.pipeline*. Click on the *Ingest Files* node and then click on the *Open Panel* icon to view the node properties.
+
++ 
+image::openshift/rhoai-pipeline.png[Data Science Pipeline,100%,100%]
+
+. Elyra provides a lot of flexibility and configuration of nodes within a pipeline. The Filename and Runtime Image properties are required for every node.
+
++
+This node runs the *copy_files.py* Python script with the *Datascience with Python 3.11 (UBI9)* runtime image.  
+
++
+image::openshift/ingest-node-properties.png[Ingest node properties,100%,100%]
+
+. Click on the *Pipeline Parameters* for the *Ingest Files* node. Note that we are using a parameter nameed *_minio_url_* in the s3 object store URL. Each node in the pipeline can use this parameter to connect to s3 storage.
+
++
+image::openshift/dsp-pipeline-params.png[Pipeline parameters,100%,100%]
+
+. Click on the *open runtimes* icon. This OpenShift AI workbench image has the Data Science Pipelines runtimes pre-configured. Note the Data Science Pipelines API Endpoint points to your OpenShift AI instance.
+
++
+image::openshift/dsp-runtimes.png[Data Science Pipelines,100%,100%]
+
+. Feel free to take a look at the other nodes in the pipeline as well to see what properties are configured and what code they run.
+
+== Docling Overview[[docling]]
+
+image::openshift/docling-workflow-image.png[Docling overview,80%,80%]
+
+Docling is an open-source toolkit designed to streamline the process of converting various document formats, particularly PDFs, into structured data that's readily usable by AI applications. Here's a breakdown of its key aspects:
+
+*Document Conversion*
+
+Docling excels at parsing diverse document formats, including PDFs, DOCX, XLSX, HTML, and images.
+It transforms these documents into a unified, structured representation, facilitating data extraction.
+
+*Advanced PDF Understanding*
+
+A significant focus is on sophisticated PDF processing, going beyond basic text extraction.
+It analyzes page layout, determines reading order, and accurately recovers table structures.
+It can also understand other complex elements like code, formulas, and image classification.
+
+*AI-Driven:*
+
+Docling leverages state-of-the-art AI models, notably for layout analysis (DocLayNet) and table structure recognition (TableFormer).
+This AI-powered approach enables more accurate and nuanced document interpretation compared to traditional methods.
+
+*Integration with AI Ecosystem:*
+It's designed to seamlessly integrate with popular AI frameworks like LangChain and LlamaIndex.
+This makes it a valuable tool for applications involving Retrieval-Augmented Generation (RAG) and other LLM-driven tasks.
+
+*Open-Source and Accessible:*
+Docling is released under the MIT license, promoting collaboration and community development.
+It's designed to run efficiently on standard hardware, making it accessible to a wide range of users.
+
+*Key Features:*
+
+- Ability to handle scanned PDFs with robust OCR support.
+- Flexible output formats (JSON, Markdown, HTML).
+- Local execution capabilities for data privacy.
+- Command-line interface (CLI) and Python API.
+- Donated to the https://lfaidata.foundation/projects/docling/[Linux Foundation] in April 2025
+
+In essence, Docling aims to bridge the gap between unstructured document data and the structured data needs of modern AI applications.
+
+=== Steps
+
+. In your workbench with the *elyra-docling-pipeline.pipeline* open,  double click on the *Docling* node. This should open the *../../instruct-generate/ingest-summit.ipynb* Jupyter notebook. 
+
++
+image::openshift/elyra-pdf-converter.png[Elyra PDF Converter Node,100%,100%]
+
+. Notice in the first cell of the notebook we install docling. After docling is installed we load the PDF and DOCX documents. 
+
++
+image::openshift/ingest-summit-notebook.png[ingest-summit-notebook,100%,100%]
+
+. Scroll down the notebook to the last two cells. This is where we're converting the different file types into markdown with Docling. 
+- The DocumnetConverter is configured to only convert files with PDF and DOCX extensions. 
+- If the file type is PDF a StandardPdfPipeline will be used, if the file type is DOCX a SimplePipeline will be used.
+- In the last cell the files are saved as markdown (.md) files.
+
++
+image::openshift/ingest-summit-notebook-docling-sections.png[Docling to markdown conversion,100%,100%]
+
+== Q&A Generator[[qna]]
+The Q&A generator uses an LLM (Large Language Model) to generate questions and answer pairs from a markdown file. These questions and answers can be included in the final qna.yaml file that will be used by InstructLab for fine tuning.
+
+=== Steps
+
+. Open the *elyra-docling-pipeline.pipeline* file and double click on the *QNA Generator* node. The *injest-splitter* file should open.
+
++
+image::openshift/qna-pipeline-node.png[QNA Node,100%,100%]
+
+. Scroll down the notebook until you get to the cell where we're using the llamaindex OpenLLM connector to connect to an LLM. Note that we need to configure a model name, model URL endpoint, and the model token. In the next section we'll configure the OS environments so we have the correct values.
+
++
+image::openshift/injest-splitter-openllm.png[OpenLLM Config,100%,100%]
+
+. Scroll down to the cell with the process_chunk function. This is where we send a request to the LLM to generate our question and answer paris from the provided markdown file.
+
++
+image::openshift/process-chunk.png[Process chunk,100%,100%]
+
